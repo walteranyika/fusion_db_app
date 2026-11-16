@@ -1,17 +1,19 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import render, redirect, get_object_or_404
 from myapp.models import Product
-from myapp.my_forms import ProductForm
+from myapp.my_forms import ProductForm, RegisterForm
 
+# 403 denied # 404 not found  # 500 server
 @login_required
 def home(request):
     products = Product.objects.all() # select * from products
     return render(request, "home.html", {"products": products} )
 
 @login_required
+@permission_required("myapp.add_product", raise_exception=True)
 def add(request):
     if request.method == "POST":
         form  = ProductForm(request.POST, request.FILES)
@@ -33,6 +35,7 @@ def add(request):
     #                        )
 
 @login_required
+@permission_required("myapp.delete_product", raise_exception=True)
 def delete_product(request, id):
     product = Product.objects.get(id=id) # select * from products where id=65
     product.delete() # delete from products where id=65
@@ -41,6 +44,7 @@ def delete_product(request, id):
 
 
 @login_required
+@permission_required("myapp.change_product", raise_exception=True) # change, add, edit, delete
 def edit_product(request, id):
     product = Product.objects.get(id=id)
     if request.method == "POST":
@@ -54,6 +58,7 @@ def edit_product(request, id):
     return render(request, "edit.html", {"form": form})
 
 @login_required
+@permission_required("myapp.view_product", raise_exception=True)
 def details(request,id):
     product = get_object_or_404(Product, id=id)
     return render(request, "details.html", {"product": product})
@@ -73,10 +78,21 @@ def signin(request):
 
 
 def signup(request):
-    return None
+    if request.method == "POST":
+        form = RegisterForm(data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = RegisterForm()
+    return render(request, 'registration/signup.html', {'form': form})
 
 @login_required
 def signout(request):
     if request.method == "POST":
         logout(request)
     return redirect('login')
+
+# reset password
+# send an email
+# login --> app /// login --> otp(email) -->app

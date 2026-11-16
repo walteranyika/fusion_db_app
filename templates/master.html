@@ -26,6 +26,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#">{{ user.first_name }}</a>
                     </li>
+                    <li class="nav-item">
+                        <form action="{% url 'sign-out' %}" method="POST">
+                             {% csrf_token %}
+                            <button class="btn btn-danger">Sign Out</button>
+                        </form>
+                    </li>
                 {% endif %}
             </ul>
         </div>
